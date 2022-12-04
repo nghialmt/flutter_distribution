@@ -1,0 +1,22 @@
+version: 2.1
+orbs:
+  android: circleci/android@1.0.3
+  flutter: circleci/flutter@1.1.0
+  node: circleci/node@1.1.6
+
+  jobs:
+    build-and-test-flutter:
+      docker:
+        - image: cirrusci/flutter
+      steps:
+        - checkout:
+        - run: flutter doctor
+        - run: flutter test
+        - run: flutter build apk
+        - store_artifacts:
+            path: build/app/outputs/bundle/productionRelease/app-production-release.aab
+
+workflows:
+  build-and-deploy:
+    jobs:
+      - build-and-test-flutter
