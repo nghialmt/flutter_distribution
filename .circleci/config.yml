@@ -4,17 +4,35 @@ orbs:
   flutter: circleci/flutter@1.1.0
   node: circleci/node@1.1.6
 
-  jobs:
-    build-and-test-flutter:
-      docker:
-        - image: cirrusci/flutter
-      steps:
-        - checkout:
-        - run: flutter doctor
-        - run: flutter test
-        - run: flutter build apk
-        - store_artifacts:
-            path: build/app/outputs/bundle/productionRelease/app-production-release.aab
+executors:
+  app-executor:
+    docker:
+      - image: circleci/flutter@1.1.0
+    working_directory: ~/repo
+  docker-publisher:
+    environment:
+      IMAGE_NAME: nghialmt/flutter_distribution
+    docker:
+      - image: circleci/buildpack-deps:stretch
+
+jobs:
+  build-and-test-flutter:
+    docker:
+      - image: cirrusci/flutter
+    steps:
+      - checkout:
+          name: Checkout to the current branch to perform further tasks
+      - run:
+          name: What is the current branch
+          command: echo ${CIRCLE_BRANCH}
+      - run: flutter doctor
+      - run:
+          name: get latest dependecies for flutter
+          command: flutter pub get
+
+      - run:
+          name: automated check for your flutter code(linting)
+          command: flutter analyze
 
 workflows:
   build-and-deploy:
