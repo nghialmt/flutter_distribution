@@ -21,8 +21,17 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
 
+def enableProguardInReleaseBuilds = false
+
+def keystoreProperties = new Properties()
+def keystorePropertiesFile = rootProject.file('key.properties')
+if (keystorePropertiesFile.exists()) {
+    keystoreProperties.load(new FileInputStream(keystorePropertiesFile))
+}
+
 apply plugin: 'com.android.application'
 apply plugin: 'kotlin-android'
+apply plugin: 'com.google.gms.google-services'
 apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
 
 android {
@@ -76,11 +85,30 @@ android {
         versionName flutterVersionName
     }
 
-    buildTypes {
+    signingConfigs {
+        debug {
+            storeFile file("debug.keystore")
+            storePassword "android"
+            keyAlias "androiddebugkey"
+            keyPassword "android"
+        }
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            keyAlias keystoreProperties['FLUTTER_PRODUCTION_UPLOAD_KEY_ALIAS']
+            keyPassword keystoreProperties['FLUTTER_PRODUCTION_UPLOAD_KEY_PASSWORD']
+            storeFile keystoreProperties['FLUTTER_PRODUCTION_UPLOAD_STORE_FILE'] ? file(keystoreProperties['FLUTTER_PRODUCTION_UPLOAD_STORE_FILE']) : null
+            storePassword keystoreProperties['FLUTTER_PRODUCTION_UPLOAD_STORE_PASSWORD']
+
+        }
+    }
+
+    buildTypes {
+        debug {
+            debuggable true
             signingConfig signingConfigs.debug
+        }
+        release {
+            proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
+            signingConfig signingConfigs.release
         }
     }
 }
@@ -90,5 +118,6 @@ flutter {
 }
 
 dependencies {
+    implementation platform('com.google.firebase:firebase-bom:31.1.0')
     implementation "org.jetbrains.kotlin:kotlin-stdlib-jdk7:$kotlin_version"
 }

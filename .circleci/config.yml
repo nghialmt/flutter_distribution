@@ -1,7 +1,8 @@
 version: 2.1
 orbs:
-  android: circleci/android@1.0.3
+  android: circleci/android@2.1.2
   flutter: circleci/flutter@1.1.0
+  ruby: circleci/ruby@1.8.0
   node: circleci/node@1.1.6
 
 executors:
@@ -34,7 +35,59 @@ jobs:
           name: automated check for your flutter code(linting)
           command: flutter analyze
 
+  android-build-and-send-appdistribution:
+    parameters:
+      deploy_to:
+        type: string
+        default: "production"
+      app-dir:
+        default: .
+        description: Path to the directory containing your pubspec.yaml file. Not needed if pubspec.yaml lives in the root.
+        type: string
+      cache-version:
+        default: v1
+        description: Change the default cache version if you need to clear the cache for any reason.
+        type: string
+
+    docker:
+      - image: cirrusci/flutter
+
+    environment:
+      GRADLE_OPTS: -Xmx3072m -Dorg.gradle.daemon=false -Dorg.gradle.jvmargs="-Xmx3072m"
+      LC_ALL: en_US.UTF-8
+      LANG: en_US.UTF-8
+    resource_class: medium
+
+    steps:
+      - ruby/install-deps:
+          app-dir: android
+          key: android
+
+      - run:
+          name: update fastlane
+          working_directory: android
+          command: |
+            bundle update fastlane
+            fastlane update_plugins
+
+      - run:
+          name: fastlane <<parameters.deploy_to>>
+          command: bundle exec fastlane <<parameters.deploy_to>>
+          working_directory: android
+
 workflows:
   build-and-deploy:
     jobs:
-      - build-and-test-flutter
+      - build-and-test-flutter:
+          filters:
+            branches:
+              ignore:
+                - develop
+      - production-approval-android:
+          type: approval
+          requires:
+            - build-and-test-flutter
+      - android-build-and-send-appdistribution:
+          requires:
+            - production-approval-android
+          deploy_to: "production"
