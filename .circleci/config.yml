@@ -36,23 +36,6 @@ jobs:
           name: automated check for your flutter code(linting)
           command: flutter analyze
 
-  decode_android_key:
-    docker:
-      - image: cirrusci/flutter
-    steps:
-      - run:
-          name: Decode Android key store
-          command: echo $KEYSTORE | base64 -d | tee FLUTTER_PRODUCTION app/FLUTTER_PRODUCTION > /dev/null
-
-  create_keystore_properties:
-    docker:
-      - image: cirrusci/flutter
-    steps:
-      - run:
-          name: Create keystore.properties
-          command: printf 'FLUTTER_PRODUCTION_UPLOAD_KEY_ALIAS=%s\nFLUTTER_PRODUCTION_UPLOAD_KEY_PASSWORD=%s\nFLUTTER_PRODUCTION_UPLOAD_STORE_FILE=%s\nFLUTTER_PRODUCTION_UPLOAD_STORE_PASSWORD=%s' \
-            $FLUTTER_PRODUCTION_UPLOAD_KEY_ALIAS $FLUTTER_PRODUCTION_UPLOAD_KEY_PASSWORD $FLUTTER_PRODUCTION_UPLOAD_STORE_FILE $FLUTTER_PRODUCTION_UPLOAD_STORE_PASSWORD > keystore.properties
-
   android-build-and-send-appdistribution:
     parameters:
       deploy_to:
@@ -96,8 +79,18 @@ jobs:
           paths:
             - vendor/bundle
 
-      - create_keystore_properties
-      - decode_android_key
+      - run:
+          name: Create keystore.properties
+          command: printf 'FLUTTER_PRODUCTION_UPLOAD_KEY_ALIAS=%s\nFLUTTER_PRODUCTION_UPLOAD_KEY_PASSWORD=%s\nFLUTTER_PRODUCTION_UPLOAD_STORE_FILE=%s\nFLUTTER_PRODUCTION_UPLOAD_STORE_PASSWORD=%s' \
+            $FLUTTER_PRODUCTION_UPLOAD_KEY_ALIAS $FLUTTER_PRODUCTION_UPLOAD_KEY_PASSWORD $FLUTTER_PRODUCTION_UPLOAD_STORE_FILE $FLUTTER_PRODUCTION_UPLOAD_STORE_PASSWORD > keystore.properties
+          working_directory: android
+
+
+      - run:
+          name: Decode Android key store
+          command: echo "$BASE64_KEYSTORE" | base64 -d | tee keystore app/keystore > /dev/null
+          working_directory: android
+
 
       - run:
           name: fastlane <<parameters.deploy_to>>
