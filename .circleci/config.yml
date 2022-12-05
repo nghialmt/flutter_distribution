@@ -80,19 +80,6 @@ jobs:
             - vendor/bundle
 
       - run:
-          name: Create keystore.properties
-          command: printf 'FLUTTER_PRODUCTION_UPLOAD_KEY_ALIAS=%s\nFLUTTER_PRODUCTION_UPLOAD_KEY_PASSWORD=%s\nFLUTTER_PRODUCTION_UPLOAD_STORE_FILE=%s\nFLUTTER_PRODUCTION_UPLOAD_STORE_PASSWORD=%s' \
-            $FLUTTER_PRODUCTION_UPLOAD_KEY_ALIAS $FLUTTER_PRODUCTION_UPLOAD_KEY_PASSWORD $FLUTTER_PRODUCTION_UPLOAD_STORE_FILE $FLUTTER_PRODUCTION_UPLOAD_STORE_PASSWORD > keystore.properties
-          working_directory: android
-
-
-      - run:
-          name: Decode Android key store
-          command: echo "$BASE64_KEYSTORE" | base64 -d | tee keystore app/keystore > /dev/null
-          working_directory: android
-
-
-      - run:
           name: fastlane <<parameters.deploy_to>>
           command: bundle exec fastlane <<parameters.deploy_to>>
           working_directory: android
