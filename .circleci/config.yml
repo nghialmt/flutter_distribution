@@ -23,6 +23,7 @@ jobs:
     steps:
       - checkout:
           name: Checkout to the current branch to perform further tasks
+
       - run:
           name: What is the current branch
           command: echo ${CIRCLE_BRANCH}
@@ -57,18 +58,26 @@ jobs:
       LC_ALL: en_US.UTF-8
       LANG: en_US.UTF-8
     resource_class: medium
+    working_directory: ~/flutter_distribution
 
     steps:
-      - ruby/install-deps:
-          app-dir: android
-          key: android
+      - checkout:
+          path: ~/flutter_distribution
 
+      - run: flutter pub get
+      - restore_cache:
+          keys:
+            - bundle-v1-android-{{ checksum "android/Gemfile.lock" }}
+            - bundle-v1-android-
       - run:
-          name: update fastlane
+          command: bundle install
           working_directory: android
-          command: |
-            bundle update fastlane
-            fastlane update_plugins
+
+      - save_cache:
+          background: true
+          key: bundle-v1-android-{{ checksum "android/Gemfile.lock" }}
+          paths:
+            - vendor/bundle
 
       - run:
           name: fastlane <<parameters.deploy_to>>

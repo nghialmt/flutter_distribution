@@ -3,6 +3,7 @@ default_platform(:android)
 platform :android do
  desc "Deploy to Firebase app distribution"
  lane :production do
+    gradle(task: "clean")
 
     version_name = get_version_name(
         gradle_file_path: "./app/build.gradle"
@@ -17,6 +18,7 @@ platform :android do
         groups: "testers",
         firebase_cli_token: "1//0gFeihg2NCT2LCgYIARAAGBASNwF-L9IryXi5VWEi83bqBbciPAbaM6L3VZN8FvNqn1RdBr9EMj0AlpS15hBW6uO5_AOhAyE71es",
         release_notes: "Release app",
+        apk_path: "../build/app/outputs/flutter-apk/app-production-release.apk",
     )
 #   begin
 #   firebase_app_distribution(
