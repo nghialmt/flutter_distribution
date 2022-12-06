@@ -14,9 +14,9 @@ platform :android do
     )
 
     firebase_app_distribution(
-        app: "1:1062176853917:android:4b9e61909cc0f4a871e974",
+        app: ENV["FIREBASE_APP_PRODUCTION"],
         groups: "testers",
-        firebase_cli_token: "1//0gFeihg2NCT2LCgYIARAAGBASNwF-L9IryXi5VWEi83bqBbciPAbaM6L3VZN8FvNqn1RdBr9EMj0AlpS15hBW6uO5_AOhAyE71es",
+        firebase_cli_token: ENV["FIREBASE_CLI_TOKEN"],
         release_notes: "Release app",
         apk_path: "../build/app/outputs/flutter-apk/app-production-release.apk",
     )

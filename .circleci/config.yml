@@ -25,6 +25,32 @@ jobs:
           name: Checkout to the current branch to perform further tasks
 
       - run:
+          name: 'Check enable to build'
+          shell: /bin/bash
+          command: |
+            if [ -n "$CIRCLE_PULL_REQUEST" ]; then
+              if [[ $CIRCLE_PULL_REQUEST =~ ^.*/(.*)$ ]]; then
+                echo "Get Pull Request status PR No=${BASH_REMATCH[1]}"
+                state=$(curl \
+                 -H "Authorization: token $GITHUB_API_PERSONAL_ACCESS_TOKEN" \
+                 "https://api.github.com/repos/nghialmt/flutter_distribution/pulls/${BASH_REMATCH[1]}" | \
+                  python3 -c "import sys, json; print(json.load(sys.stdin)['state'])")
+
+                echo "PR State=$state"
+                if [ $state = "open" ]; then
+                  echo "Since the pull request has been issued, the succeeding job will be executed. $CIRCLE_PULL_REQUEST"
+                  exit 0
+                else
+                  echo "The workflow will be canceled because the pull request is closed."
+                  curl -u ${CIRCLECI_TOKEN}: -X POST --header "Content-Type: application/json" --url https://circleci.com/api/v2/workflow/${CIRCLE_WORKFLOW_ID}/cancel
+                fi
+              fi
+            else
+              echo "The workflow will be canceled because the pull request has not been issued."
+              curl -u ${CIRCLECI_TOKEN}: -X POST --header "Content-Type: application/json" --url https://circleci.com/api/v2/workflow/${CIRCLE_WORKFLOW_ID}/cancel
+            fi
+
+      - run:
           name: What is the current branch
           command: echo ${CIRCLE_BRANCH}
       - run: flutter doctor
