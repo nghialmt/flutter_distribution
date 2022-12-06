@@ -18,17 +18,7 @@ platform :android do
         groups: "testers",
         firebase_cli_token: ENV["FIREBASE_CLI_TOKEN"],
         release_notes: "Release app",
-        apk_path: "../build/app/outputs/flutter-apk/app-production-release.apk",
+        apk_path: "../build/app/outputs/apk/production/release/app-release-armeabi-v7a.apk",
     )
-#   begin
-#   firebase_app_distribution(
-#    groups: "testers",
-#    release_notes: "Fixing bug in features",
-#    apk_path: "../build/app/outputs/flutter-apk/app-production-release.apk",
-#    firebase_cli_path: "/usr/local/bin/firebase",
-#    firebase_cli_token: "1//0gFeihg2NCT2LCgYIARAAGBASNwF-L9IryXi5VWEi83bqBbciPAbaM6L3VZN8FvNqn1RdBr9EMj0AlpS15hBW6uO5_AOhAyE71es",
-#    app: "1:1062176853917:android:4b9e61909cc0f4a871e974"
-#   )
-#   end
  end
 end
