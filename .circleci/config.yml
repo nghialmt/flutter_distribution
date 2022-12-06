@@ -1,7 +1,8 @@
 version: 2.1
 orbs:
-  android: circleci/android@1.0.3
+  android: circleci/android@2.1.2
   flutter: circleci/flutter@1.1.0
+  ruby: circleci/ruby@1.8.0
   node: circleci/node@1.1.6
 
 executors:
@@ -22,6 +23,7 @@ jobs:
     steps:
       - checkout:
           name: Checkout to the current branch to perform further tasks
+
       - run:
           name: What is the current branch
           command: echo ${CIRCLE_BRANCH}
@@ -34,7 +36,80 @@ jobs:
           name: automated check for your flutter code(linting)
           command: flutter analyze
 
+  android-build-and-send-appdistribution:
+    parameters:
+      deploy_to:
+        type: string
+        default: "production"
+      app-dir:
+        default: .
+        description: Path to the directory containing your pubspec.yaml file. Not needed if pubspec.yaml lives in the root.
+        type: string
+      cache-version:
+        default: v1
+        description: Change the default cache version if you need to clear the cache for any reason.
+        type: string
+
+    docker:
+      - image: cirrusci/flutter
+
+    environment:
+      GRADLE_OPTS: -Xmx3072m -Dorg.gradle.daemon=false -Dorg.gradle.jvmargs="-Xmx3072m"
+      LC_ALL: en_US.UTF-8
+      LANG: en_US.UTF-8
+    resource_class: medium
+    working_directory: ~/flutter_distribution
+
+    steps:
+      - checkout:
+          path: ~/flutter_distribution
+
+      - run: flutter pub get
+      - restore_cache:
+          keys:
+            - bundle-v1-android-{{ checksum "android/Gemfile.lock" }}
+            - bundle-v1-android-
+      - run:
+          command: bundle install
+          working_directory: android
+
+      - save_cache:
+          background: true
+          key: bundle-v1-android-{{ checksum "android/Gemfile.lock" }}
+          paths:
+            - vendor/bundle
+
+      - run:
+          name: Create keystore.properties
+          command: printf 'FLUTTER_PRODUCTION_UPLOAD_KEY_ALIAS=%s\nFLUTTER_PRODUCTION_UPLOAD_KEY_PASSWORD=%s\nFLUTTER_PRODUCTION_UPLOAD_STORE_FILE=%s\nFLUTTER_PRODUCTION_UPLOAD_STORE_PASSWORD=%s' \
+            $FLUTTER_PRODUCTION_UPLOAD_KEY_ALIAS $FLUTTER_PRODUCTION_UPLOAD_KEY_PASSWORD $FLUTTER_PRODUCTION_UPLOAD_STORE_FILE $FLUTTER_PRODUCTION_UPLOAD_STORE_PASSWORD > keystore.properties
+          working_directory: android
+
+
+      - run:
+          name: Decode Android key store
+          command: echo "$BASE64_KEYSTORE" | base64 -d | tee keystore app/keystore > /dev/null
+          working_directory: android
+
+
+      - run:
+          name: fastlane <<parameters.deploy_to>>
+          command: bundle exec fastlane <<parameters.deploy_to>>
+          working_directory: android
+
 workflows:
   build-and-deploy:
     jobs:
-      - build-and-test-flutter
+      - build-and-test-flutter:
+          filters:
+            branches:
+              ignore:
+                - develop
+      - production-approval-android:
+          type: approval
+          requires:
+            - build-and-test-flutter
+      - android-build-and-send-appdistribution:
+          requires:
+            - production-approval-android
+          deploy_to: "production"
