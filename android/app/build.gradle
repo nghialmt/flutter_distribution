@@ -43,16 +43,19 @@ android {
         development {
             dimension "flavor-type"
             applicationId "com.hannah.distribution.dev"
+            flutter.target "lib/main_development.dart"
             resValue "string", "app_name", "Dev App"
         }
         staging {
             dimension "flavor-type"
             applicationId "com.hannah.distribution.stg"
+            flutter.target "lib/main_staging.dart"
             resValue "string", "app_name", "Staging App"
         }
         production {
             dimension "flavor-type"
             applicationId "com.hannah.distribution.pro"
+            flutter.target "lib/main_production.dart"
             resValue "string", "app_name", "Production App"
         }
     }
